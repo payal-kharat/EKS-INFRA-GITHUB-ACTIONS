@@ -46,7 +46,6 @@ jobs:
       AWS_REGION: us-east-1
       AWS_DEFAULT_REGION: us-east-1
       TF_IN_AUTOMATION: true
-      EKS_CLUSTER_NAME: employee-mgm-dev-cluster
 
     steps:
       - name: Checkout Repository
@@ -61,25 +60,6 @@ jobs:
 
       - name: Verify AWS Identity
         run: aws sts get-caller-identity
-
-      - name: Setup kubectl
-        if: ${{ inputs.Terraform_Action != 'init' }}
-        uses: azure/setup-kubectl@v4
-        with:
-          version: v1.33.0
-
-      - name: Configure EKS kubeconfig
-        if: ${{ inputs.Terraform_Action != 'init' }}
-        run: |
-          aws eks update-kubeconfig \
-            --name "$EKS_CLUSTER_NAME" \
-            --region "$AWS_REGION"
-
-      - name: Verify EKS Access
-        if: ${{ inputs.Terraform_Action != 'init' }}
-        run: |
-          kubectl get nodes
-          kubectl get namespaces
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
