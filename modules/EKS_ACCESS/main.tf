@@ -18,9 +18,4 @@ resource "aws_eks_access_policy_association" "GITHUB_ACTIONS" {
   }
 }
 
-module "ECR_REPOSITORIES" {
-  source = "./modules/ECR"
-  AWS_REGION            = var.AWS_REGION
-  ECR_REPOSITORY_NAMES  = var.ECR_REPOSITORY_NAMES
-  IMAGE_TAG_MUTABILITY  = var.IMAGE_TAG_MUTABILITY
-}
+
