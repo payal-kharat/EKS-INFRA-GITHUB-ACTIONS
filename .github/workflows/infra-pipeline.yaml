@@ -1,5 +1,4 @@
 
-```yaml
 name: Terraform AWS Infrastructure
 
 on:
@@ -205,4 +204,4 @@ jobs:
         env:
           ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
           ACTION: ${{ inputs.ACTION }}
-```
+
