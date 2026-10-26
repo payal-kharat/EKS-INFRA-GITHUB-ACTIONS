@@ -9,9 +9,9 @@ data "aws_caller_identity" "CURRENT" {}
 #   ]
 # }
 
-data "aws_iam_openid_connect_provider" "GITHUB" {
-  url = "https://token.actions.githubusercontent.com"
-}
+# data "aws_iam_openid_connect_provider" "GITHUB" {
+#   url = "https://token.actions.githubusercontent.com"
+# }
 
 resource "aws_iam_role" "GITHUB_ACTIONS" {
   name = var.IAM_ROLE_NAME
