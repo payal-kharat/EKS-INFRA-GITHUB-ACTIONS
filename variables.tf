@@ -48,3 +48,12 @@ variable "KUBERNETES_NAMESPACES" {
   type        = list(string)
 }
 
+#ECR
+variable "ECR_REPOSITORY_NAMES" {
+  type = list(string)
+}
+
+variable "IMAGE_TAG_MUTABILITY" {
+  type = string
+}
+

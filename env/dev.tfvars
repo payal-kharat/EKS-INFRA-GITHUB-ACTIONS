@@ -20,3 +20,11 @@ KUBERNETES_NAMESPACES = [
   "uat",
   "prod"
 ]
+
+ECR_REPOSITORY_NAMES = [
+  "employee-mgm-dev-db",
+  "employee-mgm-dev-backend",
+  "employee-mgm-dev-frontend"
+]
+
+IMAGE_TAG_MUTABILITY = "MUTABLE"
