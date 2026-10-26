@@ -88,6 +88,41 @@ jobs:
             -var-file="env/${{ inputs.Environment }}.tfvars" \
             -auto-approve
 
+      - name: Wait for EKS Cluster
+        if: ${{ inputs.Terraform_Action == 'apply' && inputs.Environment == 'dev' }}
+        run: |
+          aws eks wait cluster-active \
+            --name employee-mgm-dev-cluster \
+            --region "$AWS_REGION"
+
+      - name: Verify EKS Cluster
+        if: ${{ inputs.Terraform_Action == 'apply' && inputs.Environment == 'dev' }}
+        run: |
+          aws eks describe-cluster \
+            --name employee-mgm-dev-cluster \
+            --region "$AWS_REGION" \
+            --query 'cluster.{Name:name,Status:status}' \
+            --output table
+
+      - name: Setup kubectl
+        if: ${{ inputs.Terraform_Action == 'apply' && inputs.Environment == 'dev' }}
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.33.0
+
+      - name: Configure EKS kubeconfig
+        if: ${{ inputs.Terraform_Action == 'apply' && inputs.Environment == 'dev' }}
+        run: |
+          aws eks update-kubeconfig \
+            --name employee-mgm-dev-cluster \
+            --region "$AWS_REGION"
+
+      - name: Verify EKS Access
+        if: ${{ inputs.Terraform_Action == 'apply' && inputs.Environment == 'dev' }}
+        run: |
+          kubectl get nodes
+          kubectl get namespaces
+
       - name: Terraform Destroy
         if: ${{ inputs.Terraform_Action == 'destroy' }}
         run: |
