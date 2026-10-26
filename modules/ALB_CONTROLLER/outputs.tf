@@ -1,0 +1,11 @@
+output "LOAD_BALANCER_CONTROLLER_ROLE_ARN" {
+  value = aws_iam_role.LOAD_BALANCER_CONTROLLER.arn
+}
+
+output "LOAD_BALANCER_CONTROLLER_POLICY_ARN" {
+  value = aws_iam_policy.LOAD_BALANCER_CONTROLLER.arn
+}
+
+output "LOAD_BALANCER_CONTROLLER_RELEASE_NAME" {
+  value = helm_release.LOAD_BALANCER_CONTROLLER.name
+}

@@ -82,3 +82,38 @@ variable "PRIVATE_SUBNET_CIDRS" {
 variable "ENABLE_NAT_GATEWAY" {
   type = bool
 }
+
+#EKS
+
+variable "EKS_CLUSTER_VERSION" {
+  type = string
+}
+
+variable "NODE_INSTANCE_TYPE" {
+  type = string
+}
+
+variable "NODE_DESIRED_SIZE" {
+  type = number
+}
+
+variable "NODE_MIN_SIZE" {
+  type = number
+}
+
+variable "NODE_MAX_SIZE" {
+  type = number
+}
+
+variable "EBS_CSI_IAM_ROLE_NAME" {
+  type = string
+}
+
+#ALB
+variable "LOAD_BALANCER_CONTROLLER_IAM_ROLE_NAME" {
+  type = string
+}
+
+variable "HELM_CHART_VERSION" {
+  type = string
+}
