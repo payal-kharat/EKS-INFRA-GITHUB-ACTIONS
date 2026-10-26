@@ -1,7 +1,7 @@
 
 output "GITHUB_ACTIONS_ROLE_ARN" {
   description = "IAM role ARN assumed by GitHub Actions"
-  value       = aws_iam_role.GITHUB_ACTIONS.arn
+  value       = data.aws_iam_role.GITHUB_ACTIONS.arn
 }
 
 output "GITHUB_OIDC_PROVIDER_ARN" {
