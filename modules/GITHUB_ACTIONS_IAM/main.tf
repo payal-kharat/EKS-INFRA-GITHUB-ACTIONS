@@ -1,12 +1,16 @@
 
 data "aws_caller_identity" "CURRENT" {}
 
-resource "aws_iam_openid_connect_provider" "GITHUB" {
-  url = "https://token.actions.githubusercontent.com"
+# resource "aws_iam_openid_connect_provider" "GITHUB" {
+#   url = "https://token.actions.githubusercontent.com"
 
-  client_id_list = [
-    "sts.amazonaws.com"
-  ]
+#   client_id_list = [
+#     "sts.amazonaws.com"
+#   ]
+# }
+
+data "aws_iam_openid_connect_provider" "GITHUB" {
+  url = "https://token.actions.githubusercontent.com"
 }
 
 resource "aws_iam_role" "GITHUB_ACTIONS" {
@@ -20,7 +24,7 @@ resource "aws_iam_role" "GITHUB_ACTIONS" {
         Effect = "Allow"
 
         Principal = {
-          Federated = aws_iam_openid_connect_provider.GITHUB.arn
+          Federated = data.aws_iam_openid_connect_provider.GITHUB.arn
         }
 
         Action = "sts:AssumeRoleWithWebIdentity"
