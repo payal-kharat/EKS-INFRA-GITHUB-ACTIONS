@@ -14,7 +14,7 @@ data "aws_caller_identity" "CURRENT" {}
 # }
 
 resource "aws_iam_role" "GITHUB_ACTIONS" {
-  name = var.IAM_ROLE_NAME
+  name = var.IAM_ROLE_ARN
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -44,7 +44,7 @@ resource "aws_iam_role" "GITHUB_ACTIONS" {
 }
 
 resource "aws_iam_policy" "ECR_ACCESS" {
-  name        = "${var.IAM_ROLE_NAME}-ecr-policy"
+  name        = "${var.IAM_ROLE_ARN}-ecr-policy"
   description = "Allow GitHub Actions to push and pull Employee Management images"
 
   policy = jsonencode({
@@ -83,7 +83,7 @@ resource "aws_iam_policy" "ECR_ACCESS" {
 }
 
 resource "aws_iam_policy" "EKS_DESCRIBE" {
-  name        = "${var.IAM_ROLE_NAME}-eks-describe-policy"
+  name        = "${var.IAM_ROLE_ARN}-eks-describe-policy"
   description = "Allow GitHub Actions to retrieve existing EKS cluster details"
 
   policy = jsonencode({

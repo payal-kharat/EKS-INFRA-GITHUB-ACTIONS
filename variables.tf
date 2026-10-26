@@ -19,10 +19,15 @@ variable "GITHUB_BRANCH" {
   default     = "main"
 }
 
-variable "IAM_ROLE_NAME" {
-  description = "IAM role name for GitHub Actions"
+# variable "IAM_ROLE_NAME" {
+#   description = "IAM role name for GitHub Actions"
+#   type        = string
+#   default     = "employee-mgm-github-actions-role"
+# }
+
+variable "IAM_ROLE_ARN" {
+  description = "ARN of the existing GitHub Actions IAM role"
   type        = string
-  default     = "employee-mgm-github-actions-role"
 }
 
 variable "ECR_REPOSITORY_PREFIX" {
