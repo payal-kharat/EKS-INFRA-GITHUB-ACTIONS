@@ -24,7 +24,7 @@ resource "aws_iam_role" "GITHUB_ACTIONS" {
         Effect = "Allow"
 
         Principal = {
-          Federated = data.aws_iam_openid_connect_provider.GITHUB.arn
+          Federated  = "arn:aws:iam::552940445807:oidc-provider/token.actions.githubusercontent.com"
         }
 
         Action = "sts:AssumeRoleWithWebIdentity"
