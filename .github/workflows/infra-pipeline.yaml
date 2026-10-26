@@ -1,1 +1,208 @@
 
+```yaml
+name: Terraform AWS Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      ENVIRONMENT:
+        description: Select Environment
+        type: choice
+        required: true
+        default: dev
+        options:
+          - dev
+          - qa
+          - uat
+          - prod
+      ACTION:
+        description: Terraform Action
+        type: choice
+        required: true
+        default: PLAN
+        options:
+          - PLAN
+          - APPLY
+          - DESTROY
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+
+jobs:
+  TerraformPlan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.6"
+          terraform_wrapper: false
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check Terraform and AWS Access
+        run: |
+          set -e
+          terraform -version
+          aws sts get-caller-identity
+
+      - name: Check Terraform Formatting
+        run: terraform fmt -check -recursive
+
+      - name: Initialize and Validate Terraform
+        run: |
+          set -e
+
+          BACKEND_CONFIG="backend_conf/backend_${ENVIRONMENT}.conf"
+          TFVARS_FILE="env/${ENVIRONMENT}.tfvars"
+
+          test -f "$BACKEND_CONFIG" || {
+            echo "ERROR: Backend file not found: $BACKEND_CONFIG"
+            exit 1
+          }
+
+          test -f "$TFVARS_FILE" || {
+            echo "ERROR: Variables file not found: $TFVARS_FILE"
+            exit 1
+          }
+
+          terraform init \
+            -input=false \
+            -reconfigure \
+            -backend-config="$BACKEND_CONFIG"
+
+          terraform validate
+        env:
+          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+
+      - name: Create Terraform Plan
+        run: |
+          set -e
+
+          TFVARS_FILE="env/${ENVIRONMENT}.tfvars"
+          mkdir -p "$RUNNER_TEMP/terraform-plan"
+
+          if [ "$ACTION" = "APPLY" ]; then
+            terraform plan \
+              -input=false \
+              -var-file="$TFVARS_FILE" \
+              -out="$RUNNER_TEMP/terraform-plan/tfplan"
+
+            terraform show -no-color "$RUNNER_TEMP/terraform-plan/tfplan"
+
+          elif [ "$ACTION" = "DESTROY" ]; then
+            echo "WARNING: Creating DESTROY plan for $ENVIRONMENT"
+
+            terraform plan \
+              -destroy \
+              -input=false \
+              -var-file="$TFVARS_FILE" \
+              -out="$RUNNER_TEMP/terraform-plan/tfplan"
+
+            terraform show -no-color "$RUNNER_TEMP/terraform-plan/tfplan"
+
+          else
+            terraform plan \
+              -input=false \
+              -var-file="$TFVARS_FILE"
+          fi
+        env:
+          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+          ACTION: ${{ inputs.ACTION }}
+
+      - name: Upload Saved Terraform Plan
+        if: ${{ inputs.ACTION == 'APPLY' || inputs.ACTION == 'DESTROY' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: ${{ runner.temp }}/terraform-plan/tfplan
+          if-no-files-found: error
+          retention-days: 1
+
+  TerraformExecute:
+    name: Execute Approved Terraform Plan
+    needs: TerraformPlan
+    if: ${{ inputs.ACTION == 'APPLY' || inputs.ACTION == 'DESTROY' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    environment:
+      name: aws-infra-${{ inputs.ENVIRONMENT }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.16.6"
+          terraform_wrapper: false
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Initialize Terraform Backend
+        run: |
+          set -e
+          BACKEND_CONFIG="backend_conf/backend_${ENVIRONMENT}.conf"
+
+          test -f "$BACKEND_CONFIG" || {
+            echo "ERROR: Backend file not found: $BACKEND_CONFIG"
+            exit 1
+          }
+
+          terraform init \
+            -input=false \
+            -reconfigure \
+            -backend-config="$BACKEND_CONFIG"
+        env:
+          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+
+      - name: Download Saved Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: ${{ runner.temp }}/terraform-plan
+
+      - name: Execute Approved Terraform Plan
+        run: |
+          set -e
+
+          PLAN_FILE="$RUNNER_TEMP/terraform-plan/tfplan"
+
+          if [ ! -f "$PLAN_FILE" ]; then
+            echo "ERROR: Saved Terraform plan not found: $PLAN_FILE"
+            exit 1
+          fi
+
+          if [ "$ACTION" = "DESTROY" ]; then
+            echo "WARNING: Destroying infrastructure for $ENVIRONMENT"
+          else
+            echo "Applying approved plan to $ENVIRONMENT"
+          fi
+
+          terraform apply -input=false "$PLAN_FILE"
+        env:
+          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
+          ACTION: ${{ inputs.ACTION }}
+```
