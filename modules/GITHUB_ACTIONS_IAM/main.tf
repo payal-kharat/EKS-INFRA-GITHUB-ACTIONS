@@ -105,7 +105,7 @@ resource "aws_iam_policy" "EKS_DESCRIBE" {
 
 resource "aws_iam_role_policy" "ECR_REPOSITORY_MANAGEMENT" {
   name = "Terraform-ECR-Repository-Management"
-  role = aws_iam_role.GITHUB_ACTIONS_TERRAFORM.id
+  role = aws_iam_role.GITHUB_ACTIONS.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -132,7 +132,7 @@ resource "aws_iam_role_policy" "ECR_REPOSITORY_MANAGEMENT" {
 
 resource "aws_iam_role_policy" "EKS_ADDON_MANAGEMENT" {
   name = "Terraform-EKS-Addon-Management"
-  role = aws_iam_role.GITHUB_ACTIONS_TERRAFORM.id
+  role = aws_iam_role.GITHUB_ACTIONS.id
 
   policy = jsonencode({
     Version = "2012-10-17"
