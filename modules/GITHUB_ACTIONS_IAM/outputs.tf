@@ -6,7 +6,7 @@ output "GITHUB_ACTIONS_ROLE_ARN" {
 
 output "GITHUB_OIDC_PROVIDER_ARN" {
   description = "GitHub OIDC identity provider ARN"
-  value       = aws_iam_openid_connect_provider.GITHUB.arn
+  value       = data.aws_iam_openid_connect_provider.GITHUB.arn
 }
 
 output "ECR_POLICY_ARN" {
