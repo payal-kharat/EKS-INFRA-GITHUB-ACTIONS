@@ -1,15 +1,14 @@
-
-output "EKS_ACCESS_ENTRY_ARN" {
-  description = "ARN of the GitHub Actions EKS access entry"
-  value       = aws_eks_access_entry.GITHUB_ACTIONS.arn
+output "EKS_ACCESS_ENTRY_ID" {
+  description = "EKS access entry identifier"
+  value       = "${aws_eks_access_entry.GITHUB_ACTIONS.cluster_name}:${aws_eks_access_entry.GITHUB_ACTIONS.principal_arn}"
 }
 
 output "EKS_ACCESS_POLICY_ASSOCIATION_ID" {
-  description = "ID of the associated EKS access policy"
+  description = "EKS access policy association identifier"
   value       = aws_eks_access_policy_association.GITHUB_ACTIONS.id
 }
 
 output "EKS_ACCESS_PRINCIPAL_ARN" {
-  description = "IAM role authorized to access EKS"
+  description = "IAM principal granted access to EKS"
   value       = aws_eks_access_entry.GITHUB_ACTIONS.principal_arn
 }

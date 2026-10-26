@@ -1,3 +1,15 @@
+module "VPC" {
+  source = "./modules/VPC"
+
+  AWS_REGION           = var.AWS_REGION
+  PROJECT_NAME         = var.PROJECT_NAME
+  VPC_CIDR             = var.VPC_CIDR
+  AVAILABILITY_ZONES   = var.AVAILABILITY_ZONES
+  PUBLIC_SUBNET_CIDRS  = var.PUBLIC_SUBNET_CIDRS
+  PRIVATE_SUBNET_CIDRS = var.PRIVATE_SUBNET_CIDRS
+  EKS_CLUSTER_NAME     = var.EKS_CLUSTER_NAME
+  ENABLE_NAT_GATEWAY   = var.ENABLE_NAT_GATEWAY
+}
 
 module "GITHUB_ACTIONS_IAM" {
   source                = "./modules/GITHUB_ACTIONS_IAM"
