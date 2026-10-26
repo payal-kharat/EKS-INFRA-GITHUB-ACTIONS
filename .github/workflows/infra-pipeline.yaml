@@ -1,207 +1,113 @@
 
-name: Terraform AWS Infrastructure
+name: Terraform Infrastructure Pipeline
 
 on:
   workflow_dispatch:
     inputs:
-      ENVIRONMENT:
-        description: Select Environment
-        type: choice
+      Environment:
+        description: "Select the environment"
         required: true
-        default: dev
+        type: choice
         options:
           - dev
           - qa
           - uat
           - prod
-      ACTION:
-        description: Terraform Action
-        type: choice
+
+      Terraform_Action:
+        description: "Select the Terraform action"
         required: true
-        default: PLAN
+        type: choice
         options:
-          - PLAN
-          - APPLY
-          - DESTROY
+          - init
+          - plan
+          - apply
+          - destroy
+
+      Auto_Approve:
+        description: "Skip the GitHub manual approval gate for apply/destroy"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
   id-token: write
+  contents: read
 
-env:
-  AWS_REGION: us-east-1
-  TF_IN_AUTOMATION: "true"
-  TF_INPUT: "false"
+# Prevent simultaneous workflow runs against the same environment.
+concurrency:
+  group: terraform-${{ inputs.Environment }}
+  cancel-in-progress: false
 
 jobs:
-  TerraformPlan:
-    name: Terraform Plan
+  terraform:
+    name: Terraform ${{ inputs.Terraform_Action }} - ${{ inputs.Environment }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.16.6"
-          terraform_wrapper: false
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Check Terraform and AWS Access
-        run: |
-          set -e
-          terraform -version
-          aws sts get-caller-identity
-
-      - name: Check Terraform Formatting
-        run: terraform fmt -check -recursive
-
-      - name: Initialize and Validate Terraform
-        run: |
-          set -e
-
-          BACKEND_CONFIG="backend_conf/backend_${ENVIRONMENT}.conf"
-          TFVARS_FILE="env/${ENVIRONMENT}.tfvars"
-
-          test -f "$BACKEND_CONFIG" || {
-            echo "ERROR: Backend file not found: $BACKEND_CONFIG"
-            exit 1
-          }
-
-          test -f "$TFVARS_FILE" || {
-            echo "ERROR: Variables file not found: $TFVARS_FILE"
-            exit 1
-          }
-
-          terraform init \
-            -input=false \
-            -reconfigure \
-            -backend-config="$BACKEND_CONFIG"
-
-          terraform validate
-        env:
-          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
-
-      - name: Create Terraform Plan
-        run: |
-          set -e
-
-          TFVARS_FILE="env/${ENVIRONMENT}.tfvars"
-          mkdir -p "$RUNNER_TEMP/terraform-plan"
-
-          if [ "$ACTION" = "APPLY" ]; then
-            terraform plan \
-              -input=false \
-              -var-file="$TFVARS_FILE" \
-              -out="$RUNNER_TEMP/terraform-plan/tfplan"
-
-            terraform show -no-color "$RUNNER_TEMP/terraform-plan/tfplan"
-
-          elif [ "$ACTION" = "DESTROY" ]; then
-            echo "WARNING: Creating DESTROY plan for $ENVIRONMENT"
-
-            terraform plan \
-              -destroy \
-              -input=false \
-              -var-file="$TFVARS_FILE" \
-              -out="$RUNNER_TEMP/terraform-plan/tfplan"
-
-            terraform show -no-color "$RUNNER_TEMP/terraform-plan/tfplan"
-
-          else
-            terraform plan \
-              -input=false \
-              -var-file="$TFVARS_FILE"
-          fi
-        env:
-          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
-          ACTION: ${{ inputs.ACTION }}
-
-      - name: Upload Saved Terraform Plan
-        if: ${{ inputs.ACTION == 'APPLY' || inputs.ACTION == 'DESTROY' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan
-          path: ${{ runner.temp }}/terraform-plan/tfplan
-          if-no-files-found: error
-          retention-days: 1
-
-  TerraformExecute:
-    name: Execute Approved Terraform Plan
-    needs: TerraformPlan
-    if: ${{ inputs.ACTION == 'APPLY' || inputs.ACTION == 'DESTROY' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-
+    # Configure these two GitHub environments:
+    # terraform-approval: required reviewers enabled
+    # terraform-no-approval: no required reviewers
     environment:
-      name: aws-infra-${{ inputs.ENVIRONMENT }}
+      name: ${{ (inputs.Terraform_Action == 'apply' || inputs.Terraform_Action == 'destroy') && !inputs.Auto_Approve && 'terraform-approval' || 'terraform-no-approval' }}
+
+    env:
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      TF_IN_AUTOMATION: true
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.16.6"
-          terraform_wrapper: false
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsTerraform
 
-      - name: Initialize Terraform Backend
-        run: |
-          set -e
-          BACKEND_CONFIG="backend_conf/backend_${ENVIRONMENT}.conf"
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
 
-          test -f "$BACKEND_CONFIG" || {
-            echo "ERROR: Backend file not found: $BACKEND_CONFIG"
-            exit 1
-          }
-
-          terraform init \
-            -input=false \
-            -reconfigure \
-            -backend-config="$BACKEND_CONFIG"
-        env:
-          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
-
-      - name: Download Saved Terraform Plan
-        uses: actions/download-artifact@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
-          name: terraform-plan
-          path: ${{ runner.temp }}/terraform-plan
+          terraform_version: "1.16.1"
 
-      - name: Execute Approved Terraform Plan
+      - name: Terraform Init
         run: |
-          set -e
+          echo "========================================"
+          echo "Terraform Init"
+          echo "Environment: ${{ inputs.Environment }}"
+          echo "========================================"
 
-          PLAN_FILE="$RUNNER_TEMP/terraform-plan/tfplan"
+          terraform init -reconfigure \
+            -backend-config="backend_conf/backend-${{ inputs.Environment }}.conf"
 
-          if [ ! -f "$PLAN_FILE" ]; then
-            echo "ERROR: Saved Terraform plan not found: $PLAN_FILE"
-            exit 1
-          fi
+      - name: Terraform Validate
+        if: ${{ inputs.Terraform_Action == 'plan' || inputs.Terraform_Action == 'apply' }}
+        run: terraform validate
 
-          if [ "$ACTION" = "DESTROY" ]; then
-            echo "WARNING: Destroying infrastructure for $ENVIRONMENT"
-          else
-            echo "Applying approved plan to $ENVIRONMENT"
-          fi
+      - name: Terraform Plan
+        if: ${{ inputs.Terraform_Action == 'plan' }}
+        run: |
+          terraform plan \
+            -var-file="environments/${{ inputs.Environment }}.tfvars"
 
-          terraform apply -input=false "$PLAN_FILE"
-        env:
-          ENVIRONMENT: ${{ inputs.ENVIRONMENT }}
-          ACTION: ${{ inputs.ACTION }}
+      - name: Terraform Apply
+        if: ${{ inputs.Terraform_Action == 'apply' }}
+        run: |
+          terraform apply \
+            -var-file="environments/${{ inputs.Environment }}.tfvars" \
+            -auto-approve
 
+      - name: Terraform Destroy
+        if: ${{ inputs.Terraform_Action == 'destroy' }}
+        run: |
+          terraform destroy \
+            -var-file="environments/${{ inputs.Environment }}.tfvars" \
+            -auto-approve
+
+      - name: Terraform Init Completed
+        if: ${{ inputs.Terraform_Action == 'init' }}
+        run: echo "Terraform initialization completed successfully."
