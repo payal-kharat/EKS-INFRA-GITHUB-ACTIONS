@@ -102,6 +102,59 @@ resource "aws_iam_policy" "EKS_DESCRIBE" {
   })
 }
 
+
+resource "aws_iam_role_policy" "ECR_REPOSITORY_MANAGEMENT" {
+  name = "Terraform-ECR-Repository-Management"
+  role = aws_iam_role.GITHUB_ACTIONS_TERRAFORM.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ManageEmployeeManagementECR"
+        Effect = "Allow"
+        Action = [
+          "ecr:CreateRepository",
+          "ecr:DescribeRepositories",
+          "ecr:TagResource",
+          "ecr:UntagResource",
+          "ecr:PutLifecyclePolicy",
+          "ecr:GetLifecyclePolicy",
+          "ecr:DeleteLifecyclePolicy",
+          "ecr:PutImageScanningConfiguration",
+          "ecr:PutImageTagMutability"
+        ]
+        Resource = "arn:aws:ecr:us-east-1:552940445807:repository/employee-mgm-dev-*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "EKS_ADDON_MANAGEMENT" {
+  name = "Terraform-EKS-Addon-Management"
+  role = aws_iam_role.GITHUB_ACTIONS_TERRAFORM.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ManageEmployeeManagementEKSAddons"
+        Effect = "Allow"
+        Action = [
+          "eks:CreateAddon",
+          "eks:DescribeAddon",
+          "eks:DescribeAddons",
+          "eks:ListAddons",
+          "eks:UpdateAddon",
+          "eks:DeleteAddon"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+
 resource "aws_iam_role_policy_attachment" "ECR_ACCESS" {
   role       = aws_iam_role.GITHUB_ACTIONS.name
   policy_arn = aws_iam_policy.ECR_ACCESS.arn
