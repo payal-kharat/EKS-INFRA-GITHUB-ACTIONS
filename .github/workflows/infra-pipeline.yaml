@@ -92,20 +92,20 @@ jobs:
         if: ${{ inputs.Terraform_Action == 'plan' }}
         run: |
           terraform plan \
-            -var-file="environments/${{ inputs.Environment }}.tfvars"
+            -var-file="env/${{ inputs.Environment }}.tfvars"
 
       - name: Terraform Apply
         if: ${{ inputs.Terraform_Action == 'apply' }}
         run: |
           terraform apply \
-            -var-file="environments/${{ inputs.Environment }}.tfvars" \
+            -var-file="env/${{ inputs.Environment }}.tfvars" \
             -auto-approve
 
       - name: Terraform Destroy
         if: ${{ inputs.Terraform_Action == 'destroy' }}
         run: |
           terraform destroy \
-            -var-file="environments/${{ inputs.Environment }}.tfvars" \
+            -var-file="env/${{ inputs.Environment }}.tfvars" \
             -auto-approve
 
       - name: Terraform Init Completed
