@@ -12,11 +12,11 @@ module "VPC" {
 }
 
 module "GITHUB_ACTIONS_IAM" {
-  source                = "./modules/GITHUB_ACTIONS_IAM"
-  AWS_REGION            = var.AWS_REGION
-  GITHUB_OWNER          = var.GITHUB_OWNER
-  GITHUB_REPOSITORY     = var.GITHUB_REPOSITORY
-  GITHUB_BRANCH         = var.GITHUB_BRANCH
+  source            = "./modules/GITHUB_ACTIONS_IAM"
+  AWS_REGION        = var.AWS_REGION
+  GITHUB_OWNER      = var.GITHUB_OWNER
+  GITHUB_REPOSITORY = var.GITHUB_REPOSITORY
+  GITHUB_BRANCH     = var.GITHUB_BRANCH
   # IAM_ROLE_NAME       = var.IAM_ROLE_NAME
   IAM_ROLE_ARN          = var.IAM_ROLE_ARN
   ECR_REPOSITORY_PREFIX = var.ECR_REPOSITORY_PREFIX
