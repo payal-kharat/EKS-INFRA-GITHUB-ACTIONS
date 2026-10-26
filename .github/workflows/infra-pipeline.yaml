@@ -82,7 +82,7 @@ jobs:
           echo "========================================"
 
           terraform init -reconfigure \
-            -backend-config="backend_conf/backend-${{ inputs.Environment }}.conf"
+            -backend-config="backend_conf/backend_${{ inputs.Environment }}.conf"
 
       - name: Terraform Validate
         if: ${{ inputs.Terraform_Action == 'plan' || inputs.Terraform_Action == 'apply' }}
