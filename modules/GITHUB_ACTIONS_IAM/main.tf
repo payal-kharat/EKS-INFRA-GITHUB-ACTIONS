@@ -1,5 +1,5 @@
 
-data "aws_caller_identity" "CURRENT" {}
+
 
 # resource "aws_iam_openid_connect_provider" "GITHUB" {
 #   url = "https://token.actions.githubusercontent.com"
@@ -13,43 +13,19 @@ data "aws_caller_identity" "CURRENT" {}
 #   url = "https://token.actions.githubusercontent.com"
 # }
 
-resource "aws_iam_role" "GITHUB_ACTIONS" {
-  name = var.IAM_ROLE_ARN
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+data "aws_caller_identity" "CURRENT" {}
 
-    Statement = [
-      {
-        Effect = "Allow"
-
-        Principal = {
-          Federated  = "arn:aws:iam::552940445807:oidc-provider/token.actions.githubusercontent.com"
-        }
-
-        Action = "sts:AssumeRoleWithWebIdentity"
-
-        Condition = {
-          StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-          }
-
-          StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:${var.GITHUB_OWNER}/${var.GITHUB_REPOSITORY}:ref:refs/heads/${var.GITHUB_BRANCH}"
-          }
-        }
-      }
-    ]
-  })
+data "aws_iam_role" "GITHUB_ACTIONS" {
+  name = "GitHubActions-EKS-Terraform-Role"
 }
 
 resource "aws_iam_policy" "ECR_ACCESS" {
-  name        = "${var.IAM_ROLE_ARN}-ecr-policy"
+  name        = "employee-mgm-github-actions-ecr-policy"
   description = "Allow GitHub Actions to push and pull Employee Management images"
 
   policy = jsonencode({
     Version = "2012-10-17"
-
     Statement = [
       {
         Sid      = "ECRAuthentication"
@@ -60,7 +36,6 @@ resource "aws_iam_policy" "ECR_ACCESS" {
       {
         Sid    = "ECRRepositoryAccess"
         Effect = "Allow"
-
         Action = [
           "ecr:BatchCheckLayerAvailability",
           "ecr:BatchGetImage",
@@ -73,7 +48,6 @@ resource "aws_iam_policy" "ECR_ACCESS" {
           "ecr:PutImage",
           "ecr:UploadLayerPart"
         ]
-
         Resource = [
           "arn:aws:ecr:${var.AWS_REGION}:${data.aws_caller_identity.CURRENT.account_id}:repository/${var.ECR_REPOSITORY_PREFIX}*"
         ]
@@ -83,20 +57,17 @@ resource "aws_iam_policy" "ECR_ACCESS" {
 }
 
 resource "aws_iam_policy" "EKS_DESCRIBE" {
-  name        = "${var.IAM_ROLE_ARN}-eks-describe-policy"
+  name        = "employee-mgm-github-actions-eks-describe-policy"
   description = "Allow GitHub Actions to retrieve existing EKS cluster details"
 
   policy = jsonencode({
     Version = "2012-10-17"
-
     Statement = [
       {
         Effect = "Allow"
-
         Action = [
           "eks:DescribeCluster"
         ]
-
         Resource = [
           for CLUSTER in var.EKS_CLUSTER_NAMES :
           "arn:aws:eks:${var.AWS_REGION}:${data.aws_caller_identity.CURRENT.account_id}:cluster/${CLUSTER}"
@@ -106,10 +77,9 @@ resource "aws_iam_policy" "EKS_DESCRIBE" {
   })
 }
 
-
 resource "aws_iam_role_policy" "ECR_REPOSITORY_MANAGEMENT" {
   name = "Terraform-ECR-Repository-Management"
-  role = aws_iam_role.GITHUB_ACTIONS.id
+  role = data.aws_iam_role.GITHUB_ACTIONS.name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -120,6 +90,7 @@ resource "aws_iam_role_policy" "ECR_REPOSITORY_MANAGEMENT" {
         Action = [
           "ecr:CreateRepository",
           "ecr:DescribeRepositories",
+          "ecr:ListTagsForResource",
           "ecr:TagResource",
           "ecr:UntagResource",
           "ecr:PutLifecyclePolicy",
@@ -128,7 +99,7 @@ resource "aws_iam_role_policy" "ECR_REPOSITORY_MANAGEMENT" {
           "ecr:PutImageScanningConfiguration",
           "ecr:PutImageTagMutability"
         ]
-        Resource = "arn:aws:ecr:us-east-1:552940445807:repository/employee-mgm-dev-*"
+        Resource = "arn:aws:ecr:${var.AWS_REGION}:${data.aws_caller_identity.CURRENT.account_id}:repository/${var.ECR_REPOSITORY_PREFIX}*"
       }
     ]
   })
@@ -136,7 +107,7 @@ resource "aws_iam_role_policy" "ECR_REPOSITORY_MANAGEMENT" {
 
 resource "aws_iam_role_policy" "EKS_ADDON_MANAGEMENT" {
   name = "Terraform-EKS-Addon-Management"
-  role = aws_iam_role.GITHUB_ACTIONS.id
+  role = data.aws_iam_role.GITHUB_ACTIONS.name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -158,13 +129,12 @@ resource "aws_iam_role_policy" "EKS_ADDON_MANAGEMENT" {
   })
 }
 
-
 resource "aws_iam_role_policy_attachment" "ECR_ACCESS" {
-  role       = aws_iam_role.GITHUB_ACTIONS.name
+  role       = data.aws_iam_role.GITHUB_ACTIONS.name
   policy_arn = aws_iam_policy.ECR_ACCESS.arn
 }
 
 resource "aws_iam_role_policy_attachment" "EKS_DESCRIBE" {
-  role       = aws_iam_role.GITHUB_ACTIONS.name
+  role       = data.aws_iam_role.GITHUB_ACTIONS.name
   policy_arn = aws_iam_policy.EKS_DESCRIBE.arn
 }
