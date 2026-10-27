@@ -25,26 +25,16 @@ module "GITHUB_ACTIONS_IAM" {
 
 
 # module "EKS_ACCESS" {
-#   source                  = "./modules/EKS_ACCESS"
+#   source = "./modules/EKS_ACCESS"
+
 #   AWS_REGION              = var.AWS_REGION
-#   EKS_CLUSTER_NAME        = var.EKS_CLUSTER_NAME
+#   EKS_CLUSTER_NAME        = module.EKS.EKS_CLUSTER_NAME
 #   GITHUB_ACTIONS_ROLE_ARN = module.GITHUB_ACTIONS_IAM.GITHUB_ACTIONS_ROLE_ARN
 #   KUBERNETES_NAMESPACES   = var.KUBERNETES_NAMESPACES
-#   depends_on              = [module.EKS]
+#   depends_on = [
+#     module.EKS
+#   ]
 # }
-
-
-module "EKS_ACCESS" {
-  source = "./modules/EKS_ACCESS"
-
-  AWS_REGION              = var.AWS_REGION
-  EKS_CLUSTER_NAME        = module.EKS.EKS_CLUSTER_NAME
-  GITHUB_ACTIONS_ROLE_ARN = module.GITHUB_ACTIONS_IAM.GITHUB_ACTIONS_ROLE_ARN
-  KUBERNETES_NAMESPACES   = var.KUBERNETES_NAMESPACES
-  depends_on = [
-    module.EKS
-  ]
-}
 
 
 module "ECR_REPOSITORIES" {
