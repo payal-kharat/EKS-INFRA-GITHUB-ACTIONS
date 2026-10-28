@@ -14,7 +14,7 @@ GITHUB_REPOSITORY = "Employee_Management_Helm_GithubActions_EKS"
 GITHUB_BRANCH     = "main"
 
 # IAM_ROLE_NAME         = "employee-mgm-github-actions-role"
-IAM_ROLE_ARN          = "arn:aws:iam::552940445807:role/GitHubActions-Employee-DB-Role"
+IAM_ROLE_ARN          = "arn:aws:iam::020048087135:role/GitHubActions-Employee-DB-Role"
 ECR_REPOSITORY_PREFIX = "employee-mgm-"
 
 EKS_CLUSTER_NAMES = [
