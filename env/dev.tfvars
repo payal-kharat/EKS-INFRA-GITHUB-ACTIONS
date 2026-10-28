@@ -23,10 +23,10 @@ EKS_CLUSTER_NAMES = [
 
 EKS_CLUSTER_NAME      = "employee-mgm-dev-cluster"
 EKS_CLUSTER_VERSION   = "1.33"
-NODE_INSTANCE_TYPE    = "t3.small"
+NODE_INSTANCE_TYPE    = "t2.medium"
 NODE_DESIRED_SIZE     = 1
 NODE_MIN_SIZE         = 1
-NODE_MAX_SIZE         = 3
+NODE_MAX_SIZE         = 1
 EBS_CSI_IAM_ROLE_NAME = "employee-mgm-dev-ebs-csi-role"
 
 KUBERNETES_NAMESPACES = [
