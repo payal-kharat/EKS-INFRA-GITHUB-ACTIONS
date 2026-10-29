@@ -1,4 +1,4 @@
-
+ENVIRONMENT  = "dev"
 AWS_REGION = "us-east-1"
 
 PROJECT_NAME         = "employee-mgm"
