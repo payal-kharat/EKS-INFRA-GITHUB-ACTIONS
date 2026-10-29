@@ -47,6 +47,7 @@ locals {
           "elasticloadbalancing:CreateTargetGroup",
           "elasticloadbalancing:CreateListener",
           "elasticloadbalancing:CreateRule",
+          "elasticloadbalancing:DescribeListenerAttributes",
           "elasticloadbalancing:ModifyLoadBalancerAttributes",
           "elasticloadbalancing:ModifyTargetGroup",
           "elasticloadbalancing:ModifyTargetGroupAttributes",
