@@ -8,6 +8,10 @@ PUBLIC_SUBNET_CIDRS  = ["10.0.1.0/24", "10.0.2.0/24"]
 PRIVATE_SUBNET_CIDRS = ["10.0.11.0/24", "10.0.12.0/24"]
 ENABLE_NAT_GATEWAY   = true
 
+COMMON_TAGS = {
+  Project   = "employee-mgm"
+  ManagedBy = "Terraform"
+}
 
 GITHUB_OWNER      = "payal-kharat"
 GITHUB_REPOSITORY = "Employee_Management_Helm_GithubActions_EKS"

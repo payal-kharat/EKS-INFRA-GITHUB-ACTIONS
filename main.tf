@@ -52,9 +52,17 @@ module "ECR_REPOSITORIES" {
 #   AWS_REGION       = var.AWS_REGION
 # }
 
+module "EKS_ADDONS" {
+  source           = "./modules/EKS-ADD-ONS"
+  EKS_CLUSTER_NAME = module.EKS.CLUSTER_NAME
+  EBS_CSI_ROLE_ARN = module.IAM.EBS_CSI_ROLE_ARN
+  PROJECT_NAME     = var.PROJECT_NAME
+  ENVIRONMENT      = var.ENVIRONMENT
+  COMMON_TAGS      = var.COMMON_TAGS
+}
+
 module "EKS" {
   source = "./modules/EKS"
-
   AWS_REGION          = var.AWS_REGION
   PROJECT_NAME        = var.PROJECT_NAME
   EKS_CLUSTER_NAME    = var.EKS_CLUSTER_NAME
@@ -72,17 +80,14 @@ module "EKS" {
 }
 
 module "LOAD_BALANCER_CONTROLLER" {
-  source = "./modules/ALB_CONTROLLER"
-
+  source                = "./modules/ALB_CONTROLLER"
   AWS_REGION            = var.AWS_REGION
   EKS_CLUSTER_NAME      = module.EKS.EKS_CLUSTER_NAME
   VPC_ID                = module.VPC.VPC_ID
   EKS_OIDC_PROVIDER_ARN = module.EKS.EKS_OIDC_PROVIDER_ARN
   EKS_OIDC_ISSUER_URL   = module.EKS.EKS_OIDC_ISSUER_URL
-
-  IAM_ROLE_NAME      = var.LOAD_BALANCER_CONTROLLER_IAM_ROLE_NAME
-  HELM_CHART_VERSION = var.HELM_CHART_VERSION
-
+  IAM_ROLE_NAME         = var.LOAD_BALANCER_CONTROLLER_IAM_ROLE_NAME
+  HELM_CHART_VERSION    = var.HELM_CHART_VERSION
   depends_on = [
     module.EKS
   ]

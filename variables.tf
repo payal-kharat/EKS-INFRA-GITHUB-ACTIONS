@@ -122,3 +122,24 @@ variable "LOAD_BALANCER_CONTROLLER_IAM_ROLE_NAME" {
 variable "HELM_CHART_VERSION" {
   type = string
 }
+
+
+variable "ENVIRONMENT" {
+  description = "Deployment environment"
+  type        = string
+
+  validation {
+    condition = contains(
+      ["dev", "qa", "uat", "prod"],
+      var.ENVIRONMENT
+    )
+
+    error_message = "ENVIRONMENT must be dev, qa, uat, or prod."
+  }
+}
+
+variable "COMMON_TAGS" {
+  description = "Common tags"
+  type        = map(string)
+  default     = {}
+}
